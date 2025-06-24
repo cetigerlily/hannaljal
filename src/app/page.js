@@ -1,92 +1,60 @@
 "use client"
-
-import { useEffect } from "react";
+import React, { useCallback, useRef, useState } from "react";
+import Webcam from "react-webcam";
 
 export default function Page() {
-  let width = 320;
-  let height = 0;
+  const webcamRef = useRef(null);
+  const [imgArr, setImgArr] = useState([]);
+  const count = useRef(0);
 
-  let streaming = false;
-  let video = null;
-  let canvas = null;
-  let photo = null;
-  let startButton = null;
+  const [isActive, setIsActive] = useState(false);
+  const intervalId = useRef(null);
 
-  useEffect(() => {
-    startUp();
+  const handleStart = () => {
+    if (isActive) {
+      return;
+    }
+    setImgArr([]);
+    count.current = 0;
+    setIsActive(true);
+
+    intervalId.current = setInterval(() => {
+      capture();
+    }, 2000);
+  }
+
+  // put clearInterval in capture function instead of handleStart function i.e. in the function which is setInterval handler
+  const capture = useCallback(() => {
+    const imgSrc = webcamRef.current.getScreenshot();
+    setImgArr((prevImgArr) => [...prevImgArr, imgSrc]);
+    count.current += 1;
+
+    if (count.current >= 4) {
+      clearInterval(intervalId.current);
+      setIsActive(false);
+      intervalId.current = null;
+    }
   }, []);
 
-  function startUp() {
-    video = document.getElementById('video');
-    canvas = document.getElementById('canvas');
-    photo = document.getElementById('photo');
-    startButton = document.getElementById('start-button');
-
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: false })
-      .then((stream) => {
-        video.srcObject = stream;
-        video.play();
-      })
-      .catch((error) => {
-        console.error(`An error occurred: ${error}`);
-      })
-
-    video.addEventListener("canplay", (event) => {
-      if (!streaming) {
-        height = (video.videoHeight / video.videoWidth) * width;
-        video.setAttribute("width", width);
-        video.setAttribute("height", height);
-        canvas.setAttribute("width", width);
-        canvas.setAttribute("height", height);
-        streaming = true;
-      }
-    });
-
-    startButton.addEventListener(
-      "click",
-      (ev) => {
-        takePicture();
-        ev.preventDefault();
-      },
-      false,
-    );
-    clearPhoto();
-  }
-
-  function clearPhoto() {
-    const context = canvas.getContext("2d");
-    context.fillStyle = "#AAA";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    const data = canvas.toDataURL("image/png");
-    photo.setAttribute("src", data);
-  }
-
-  function takePicture() {
-    const context = canvas.getContext("2d");
-    if (width && height) {
-      canvas.width = width;
-      canvas.height = height;
-      context.drawImage(video, 0, 0, width, height);
-
-      const data = canvas.toDataURL("image/png");
-      photo.setAttribute("src", data);
-    } else {
-      clearPhoto();
-    }
-  }
-
   return (
-    <div className="content-area">
-      <div className="camera">
-        <video id="video">Video stream not available.</video>
-        <button id="start-button">Take photo</button>
+    <>
+      <p>한날 한짤</p>
+      { isActive ? (
+        <Webcam
+          ref={ webcamRef }
+          mirrored={ true }
+          screenshotFormat="image/jpeg"
+          videoConstraints={{ width: 360, height: 360 }}
+        />
+      ) : (
+        <div className="h-[360] w-[360] bg-blue">
+          <p>start taking pictures!</p>
+        </div>
+      )}
+      <button onClick={ handleStart } disabled={ isActive }>start</button>
+      <div className="flex flex-row">
+        { imgArr.map((i) => <img key={ i } src={ i }/>) }
       </div>
-      <canvas id="canvas"></canvas>
-      <div className="output">
-        <img id="photo" />
-      </div>
-    </div>
+    </>
   );
-};
+}
