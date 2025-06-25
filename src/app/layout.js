@@ -1,27 +1,20 @@
+"use client";  // NOTE: might have to change layout similar to nus aerobics format
+
 import "./globals.css";
+import { HeroUIProvider } from "@heroui/react";
 
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-//
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
-
-export const metadata = {
-  title: "한날 한짤",
-};
+// export const metadata = {
+//   title: "한날 한짤",
+// };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <HeroUIProvider>
+      <html lang="en">
+      <body>
+      { children }
       </body>
-    </html>
+      </html>
+    </HeroUIProvider>
   );
 }
